@@ -1,5 +1,5 @@
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
 import requests
 import threading
 import os
@@ -9,12 +9,15 @@ from bs4 import BeautifulSoup
 import time
 import re
 
+ctk.set_appearance_mode("dark")
+ctk.set_default_color_theme("blue")
 
-class AdvancedParallelIDM:
-    def __init__(self, master):
-        self.master = master
-        master.title("Internet Download Manager - by Kamran Khan")
-        master.geometry("1000x800")
+
+class ModernParallelIDM:
+    def __init__(self):
+        self.window = ctk.CTk()
+        self.window.title("Modern Internet Download Manager - by Kamran Khan")
+        self.window.geometry("1000x800")
 
         self.create_widgets()
         self.load_config()
@@ -31,125 +34,101 @@ class AdvancedParallelIDM:
         self.current_url = ""
 
     def create_widgets(self):
-        self.style = ttk.Style()
-        self.style.theme_use('clam')
+        # Main container
+        self.main_frame = ctk.CTkFrame(self.window, fg_color="transparent")
+        self.main_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
-        self.main_frame = ttk.Frame(self.master)
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        # URL Frame
+        url_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        url_frame.pack(fill="x", pady=(0, 10))
 
-        # URL and Path Frame
-        self.url_path_frame = ttk.Frame(self.main_frame)
-        self.url_path_frame.pack(fill=tk.X, pady=5)
-
-        self.url_label = ttk.Label(self.url_path_frame, text="URL:")
-        self.url_label.grid(row=0, column=0, sticky="w", padx=(0, 5))
-
-        self.url_entry = ttk.Entry(self.url_path_frame, width=70)
-        self.url_entry.grid(row=0, column=1, sticky="we", padx=(0, 5))
+        ctk.CTkLabel(url_frame, text="URL:").pack(side="left", padx=(0, 10))
+        self.url_entry = ctk.CTkEntry(url_frame, width=400)
+        self.url_entry.pack(side="left", fill="x", expand=True)
         self.url_entry.bind(
             '<Return>', lambda event: self.find_downloadable_files())
 
-        self.path_label = ttk.Label(self.url_path_frame, text="Save to:")
-        self.path_label.grid(row=1, column=0, sticky="w",
-                             padx=(0, 5), pady=(5, 0))
+        # Path Frame
+        path_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        path_frame.pack(fill="x", pady=(0, 10))
 
-        self.path_entry = ttk.Entry(self.url_path_frame, width=60)
-        self.path_entry.grid(row=1, column=1, sticky="we",
-                             padx=(0, 5), pady=(5, 0))
+        ctk.CTkLabel(path_frame, text="Save to:").pack(
+            side="left", padx=(0, 10))
+        self.path_entry = ctk.CTkEntry(path_frame, width=300)
+        self.path_entry.pack(side="left", fill="x", expand=True)
 
-        self.browse_button = ttk.Button(
-            self.url_path_frame, text="Browse", command=self.browse_path)
-        self.browse_button.grid(row=1, column=2, sticky="e", pady=(5, 0))
-
-        self.url_path_frame.columnconfigure(1, weight=1)
+        ctk.CTkButton(path_frame, text="Browse", command=self.browse_path,
+                      width=100).pack(side="right", padx=(10, 0))
 
         # Options Frame
-        self.options_frame = ttk.Frame(self.main_frame)
-        self.options_frame.pack(fill=tk.X, pady=10)
+        options_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        options_frame.pack(fill="x", pady=(0, 10))
 
-        self.auto_segment_var = tk.BooleanVar(value=True)
-        self.auto_segment_check = ttk.Checkbutton(
-            self.options_frame, text="Auto Segment", variable=self.auto_segment_var)
-        self.auto_segment_check.pack(side=tk.LEFT)
+        self.auto_segment_var = ctk.BooleanVar(value=True)
+        ctk.CTkCheckBox(options_frame, text="Auto Segment",
+                        variable=self.auto_segment_var).pack(side="left")
 
-        self.segments_label = ttk.Label(self.options_frame, text="Segments:")
-        self.segments_label.pack(side=tk.LEFT, padx=(10, 5))
-
-        self.segments_entry = ttk.Entry(self.options_frame, width=5)
+        ctk.CTkLabel(options_frame, text="Segments:").pack(
+            side="left", padx=(20, 5))
+        self.segments_entry = ctk.CTkEntry(options_frame, width=50)
         self.segments_entry.insert(0, "8")
-        self.segments_entry.pack(side=tk.LEFT)
+        self.segments_entry.pack(side="left")
 
-        self.find_files_button = ttk.Button(
-            self.options_frame, text="Find Files", command=self.find_downloadable_files)
-        self.find_files_button.pack(side=tk.RIGHT)
+        button_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
+        button_frame.pack(side="right")
 
-        self.download_button = ttk.Button(
-            self.options_frame, text="Download", command=self.start_download, state=tk.DISABLED)
-        self.download_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.find_button = ctk.CTkButton(
+            button_frame, text="Find Files", command=self.find_downloadable_files)
+        self.find_button.pack(side="left", padx=5)
 
-        self.pause_resume_button = ttk.Button(
-            self.options_frame, text="Pause/Resume", command=self.toggle_pause_resume, state=tk.DISABLED)
-        self.pause_resume_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.download_button = ctk.CTkButton(
+            button_frame, text="Download", command=self.start_download, state="disabled")
+        self.download_button.pack(side="left", padx=5)
 
-        self.cancel_button = ttk.Button(
-            self.options_frame, text="Cancel", command=self.cancel_download, state=tk.DISABLED)
-        self.cancel_button.pack(side=tk.RIGHT, padx=(0, 5))
+        self.pause_button = ctk.CTkButton(
+            button_frame, text="Pause/Resume", command=self.toggle_pause_resume, state="disabled")
+        self.pause_button.pack(side="left", padx=5)
+
+        self.cancel_button = ctk.CTkButton(
+            button_frame, text="Cancel", command=self.cancel_download, state="disabled")
+        self.cancel_button.pack(side="left", padx=5)
 
         # File List Frame
-        self.file_list_frame = ttk.LabelFrame(
-            self.main_frame, text="Downloadable Files")
-        self.file_list_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        file_list_frame = ctk.CTkFrame(self.main_frame)
+        file_list_frame.pack(fill="both", expand=True, pady=(0, 10))
 
-        self.file_listbox = tk.Listbox(
-            self.file_list_frame, height=5, selectmode=tk.SINGLE)
-        self.file_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.file_listbox.bind('<<ListboxSelect>>', self.on_file_select)
+        ctk.CTkLabel(file_list_frame, text="Downloadable Files").pack()
 
-        self.file_scrollbar = ttk.Scrollbar(
-            self.file_list_frame, orient=tk.VERTICAL, command=self.file_listbox.yview)
-        self.file_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        self.file_listbox.config(yscrollcommand=self.file_scrollbar.set)
+        self.file_listbox = ctk.CTkTextbox(file_list_frame, height=100)
+        self.file_listbox.pack(fill="both", expand=True)
 
         # Progress Frame
-        self.progress_frame = ttk.LabelFrame(
-            self.main_frame, text="Download Progress")
-        self.progress_frame.pack(fill=tk.BOTH, expand=True, pady=10)
+        progress_frame = ctk.CTkFrame(self.main_frame, fg_color="transparent")
+        progress_frame.pack(fill="both", expand=True, pady=(0, 10))
 
-        self.overall_progress_bar = ttk.Progressbar(
-            self.progress_frame, length=700, mode='determinate')
-        self.overall_progress_bar.pack(fill=tk.X, padx=5, pady=5)
+        ctk.CTkLabel(progress_frame, text="Overall Progress").pack()
 
-        self.overall_progress_label = ttk.Label(
-            self.progress_frame, text="Overall: 0%")
-        self.overall_progress_label.pack(pady=(0, 5))
+        self.overall_progress = ctk.CTkProgressBar(progress_frame)
+        self.overall_progress.pack(fill="x", padx=10, pady=5)
+        self.overall_progress.set(0)
 
-        self.segment_progress_canvas = tk.Canvas(self.progress_frame)
-        self.segment_progress_canvas.pack(
-            side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
+        self.overall_label = ctk.CTkLabel(progress_frame, text="0%")
+        self.overall_label.pack()
 
-        self.segment_progress_scrollbar = ttk.Scrollbar(
-            self.progress_frame, orient=tk.VERTICAL, command=self.segment_progress_canvas.yview)
-        self.segment_progress_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        # Segment Progress Frame
+        self.segment_frame = ctk.CTkScrollableFrame(
+            self.main_frame, label_text="Segment Progress")
+        self.segment_frame.pack(fill="both", expand=True)
 
-        self.segment_progress_frame = ttk.Frame(self.segment_progress_canvas)
-        self.segment_progress_canvas.create_window(
-            (0, 0), window=self.segment_progress_frame, anchor=tk.NW)
+        # Details Frame
+        details_frame = ctk.CTkFrame(self.main_frame)
+        details_frame.pack(fill="both", expand=True, pady=(10, 0))
 
-        self.segment_progress_frame.bind("<Configure>", lambda e: self.segment_progress_canvas.configure(
-            scrollregion=self.segment_progress_canvas.bbox("all")))
-        self.segment_progress_canvas.configure(
-            yscrollcommand=self.segment_progress_scrollbar.set)
+        self.status_label = ctk.CTkLabel(details_frame, text="Ready")
+        self.status_label.pack()
 
-        # Status and Details Frame
-        self.status_details_frame = ttk.Frame(self.main_frame)
-        self.status_details_frame.pack(fill=tk.BOTH, expand=True, pady=10)
-
-        self.status_label = ttk.Label(self.status_details_frame, text="")
-        self.status_label.pack(fill=tk.X, pady=5)
-
-        self.details_text = tk.Text(
-            self.status_details_frame, height=10, width=120)
-        self.details_text.pack(fill=tk.BOTH, expand=True, pady=5)
+        self.details_text = ctk.CTkTextbox(details_frame, height=100)
+        self.details_text.pack(fill="both", expand=True)
 
     def load_config(self):
         try:
@@ -169,7 +148,7 @@ class AdvancedParallelIDM:
     def browse_path(self):
         folder_selected = filedialog.askdirectory()
         if folder_selected:
-            self.path_entry.delete(0, tk.END)
+            self.path_entry.delete(0, "end")
             self.path_entry.insert(0, folder_selected)
             self.save_config()
 
@@ -179,25 +158,23 @@ class AdvancedParallelIDM:
             messagebox.showerror("Error", "Please enter a URL")
             return
 
-        self.status_label.config(text="Analyzing URL...")
-        self.file_listbox.delete(0, tk.END)
-        self.master.update()
+        self.status_label.configure(text="Analyzing URL...")
+        self.file_listbox.delete("0.0", "end")
+        self.window.update()
 
         try:
             response = requests.head(url, allow_redirects=True)
             content_type = response.headers.get('Content-Type', '').lower()
 
             if 'text/html' not in content_type:
-                # This is likely a direct file link
                 file_name = os.path.basename(urlparse(url).path)
-                self.file_listbox.insert(tk.END, f"{file_name} ({url})")
+                self.file_listbox.insert("0.0", f"{file_name} ({url})\n")
                 self.current_url = url
-                self.download_button.config(state=tk.NORMAL)
-                self.status_label.config(
+                self.download_button.configure(state="normal")
+                self.status_label.configure(
                     text="Direct file link detected. Ready to download.")
                 return
 
-            # If it's an HTML page, proceed with the original logic
             response = requests.get(url)
             soup = BeautifulSoup(response.text, 'html.parser')
             links = soup.find_all('a')
@@ -213,32 +190,22 @@ class AdvancedParallelIDM:
                     file_name = os.path.basename(urlparse(full_url).path)
                     if any(file_name.lower().endswith(ext) for ext in downloadable_extensions):
                         found_files.append((file_name, full_url))
-
-            for file_name, full_url in found_files:
-                self.file_listbox.insert(tk.END, f"{file_name} ({full_url})")
+                        self.file_listbox.insert(
+                            "end", f"{file_name} ({full_url})\n")
 
             if not found_files:
-                self.status_label.config(text="No downloadable files found.")
+                self.status_label.configure(
+                    text="No downloadable files found.")
             else:
-                self.status_label.config(
+                self.status_label.configure(
                     text=f"Found {len(found_files)} downloadable file(s).")
-                self.file_listbox.selection_set(0)
-                self.on_file_select(None)
+                self.current_url = found_files[0][1]
+                self.download_button.configure(state="normal")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to analyze URL: {str(e)}")
-            self.status_label.config(
+            self.status_label.configure(
                 text="Error occurred while analyzing URL.")
-
-    def on_file_select(self, event):
-        selection = self.file_listbox.curselection()
-        if selection:
-            file_info = self.file_listbox.get(selection[0])
-            file_url = re.search(r'\((.*?)\)$', file_info).group(1)
-            self.url_entry.delete(0, tk.END)
-            self.url_entry.insert(0, file_url)
-            self.current_url = file_url
-            self.download_button.config(state=tk.NORMAL)
 
     def start_download(self):
         url = self.current_url
@@ -252,9 +219,10 @@ class AdvancedParallelIDM:
         self.download_paused = False
         self.download_completed = False
         self.download_cancelled = False
-        self.pause_resume_button.config(state=tk.NORMAL)
-        self.cancel_button.config(state=tk.NORMAL)
-        self.download_button.config(state=tk.DISABLED)
+
+        self.pause_button.configure(state="normal")
+        self.cancel_button.configure(state="normal")
+        self.download_button.configure(state="disabled")
 
         if self.auto_segment_var.get():
             segments = self.auto_segment(url)
@@ -266,24 +234,25 @@ class AdvancedParallelIDM:
         self.start_time = time.time()
 
         # Clear previous progress bars
-        for widget in self.segment_progress_frame.winfo_children():
+        for widget in self.segment_frame.winfo_children():
             widget.destroy()
 
         # Create new progress bars
         self.segment_progress_bars = []
-        self.segment_progress_labels = []
-        for i in range(segments):
-            frame = ttk.Frame(self.segment_progress_frame)
-            frame.pack(fill=tk.X, pady=2)
+        self.segment_labels = []
 
-            progress_bar = ttk.Progressbar(
-                frame, length=100, mode='determinate')
-            progress_bar.pack(side=tk.LEFT, expand=True, fill=tk.X)
+        for i in range(segments):
+            frame = ctk.CTkFrame(self.segment_frame)
+            frame.pack(fill="x", pady=2)
+
+            progress_bar = ctk.CTkProgressBar(frame)
+            progress_bar.pack(side="left", fill="x", expand=True)
+            progress_bar.set(0)
             self.segment_progress_bars.append(progress_bar)
 
-            progress_label = ttk.Label(frame, text=f"S{i+1}: 0%")
-            progress_label.pack(side=tk.LEFT, padx=(5, 0))
-            self.segment_progress_labels.append(progress_label)
+            label = ctk.CTkLabel(frame, text=f"S{i+1}: 0%")
+            label.pack(side="right", padx=5)
+            self.segment_labels.append(label)
 
         self.download_threads = []
         for i in range(segments):
@@ -292,20 +261,20 @@ class AdvancedParallelIDM:
             self.download_threads.append(thread)
             thread.start()
 
-        self.master.after(100, self.update_ui)
+        self.window.after(100, self.update_ui)
 
     def auto_segment(self, url):
         try:
             response = requests.head(url)
             self.total_size = int(response.headers.get('content-length', 0))
             if self.total_size > 100 * 1024 * 1024:  # If file is larger than 100MB
-                return 16  # Use 16 segments for large files
+                return 16
             elif self.total_size > 50 * 1024 * 1024:  # If file is larger than 50MB
-                return 8  # Use 8 segments for medium files
+                return 8
             else:
-                return 4  # Use 4 segments for small files
+                return 4
         except:
-            return 8  # Default to 8 segments if unable to determine file size
+            return 8
 
     def download_segment(self, url, save_path, segment_index, total_segments):
         try:
@@ -318,6 +287,7 @@ class AdvancedParallelIDM:
             start = segment_index * segment_size
             end = start + segment_size - 1 if segment_index < total_segments - \
                 1 else self.total_size - 1
+
             headers = {'Range': f'bytes={start}-{end}'}
             response = requests.get(url, headers=headers, stream=True)
 
@@ -340,18 +310,16 @@ class AdvancedParallelIDM:
 
     def update_ui(self):
         if not self.download_completed and not self.download_cancelled:
-            overall_progress = (
-                self.total_downloaded / self.total_size) * 100 if self.total_size > 0 else 0
-            self.overall_progress_bar['value'] = overall_progress
-            self.overall_progress_label.config(
-                text=f"Overall: {overall_progress:.1f}%")
+            overall_progress = (self.total_downloaded /
+                                self.total_size) if self.total_size > 0 else 0
+            self.overall_progress.set(overall_progress)
+            self.overall_label.configure(text=f"{overall_progress:.1%}")
 
             segment_size = self.total_size // len(self.segment_progress)
-            for i, (progress_bar, progress_label) in enumerate(zip(self.segment_progress_bars, self.segment_progress_labels)):
-                segment_progress = (
-                    self.segment_progress[i] / segment_size) * 100
-                progress_bar['value'] = segment_progress
-                progress_label.config(text=f"S{i+1}: {segment_progress:.1f}%")
+            for i, (progress_bar, label) in enumerate(zip(self.segment_progress_bars, self.segment_labels)):
+                segment_progress = (self.segment_progress[i] / segment_size)
+                progress_bar.set(segment_progress)
+                label.configure(text=f"S{i+1}: {segment_progress:.1%}")
 
             elapsed_time = time.time() - self.start_time
             self.download_speed = self.total_downloaded / \
@@ -359,25 +327,15 @@ class AdvancedParallelIDM:
 
             self.update_details()
 
-            if all(thread.is_alive() == False for thread in self.download_threads):
+            if all(not thread.is_alive() for thread in self.download_threads):
                 self.download_completed = True
                 self.combine_segments()
-                self.status_label.config(text="Download completed!")
-                self.pause_resume_button.config(state=tk.DISABLED)
-                self.cancel_button.config(state=tk.DISABLED)
-                self.download_button.config(state=tk.NORMAL)
+                self.status_label.configure(text="Download completed!")
+                self.pause_button.configure(state="disabled")
+                self.cancel_button.configure(state="disabled")
+                self.download_button.configure(state="normal")
             else:
-                self.master.after(100, self.update_ui)
-        elif self.download_cancelled:
-            self.status_label.config(text="Download cancelled.")
-            self.pause_resume_button.config(state=tk.DISABLED)
-            self.cancel_button.config(state=tk.DISABLED)
-            self.download_button.config(state=tk.NORMAL)
-        else:
-            self.status_label.config(text="Download completed!")
-            self.pause_resume_button.config(state=tk.DISABLED)
-            self.cancel_button.config(state=tk.DISABLED)
-            self.download_button.config(state=tk.NORMAL)
+                self.window.after(100, self.update_ui)
 
     def update_details(self):
         details = f"Download Speed: {self.download_speed:.2f} MB/s\n"
@@ -388,15 +346,9 @@ class AdvancedParallelIDM:
                                     self.start_time:.2f} seconds\n"
         details += f"Estimated Time Remaining: {
             self.estimate_time_remaining():.2f} seconds\n"
-        details += "Segment Progress:\n"
-        segment_size = self.total_size // len(self.segment_progress)
-        for i, progress in enumerate(self.segment_progress):
-            segment_progress = (progress / segment_size) * 100
-            details += f"  Segment {i+1}: {progress / (1024 * 1024):.2f} MB / {
-                segment_size / (1024 * 1024):.2f} MB ({segment_progress:.1f}%)\n"
 
-        self.details_text.delete(1.0, tk.END)
-        self.details_text.insert(tk.END, details)
+        self.details_text.delete("0.0", "end")
+        self.details_text.insert("0.0", details)
 
     def estimate_time_remaining(self):
         if self.download_speed > 0:
@@ -407,17 +359,17 @@ class AdvancedParallelIDM:
     def toggle_pause_resume(self):
         self.download_paused = not self.download_paused
         if self.download_paused:
-            self.pause_resume_button.config(text="Resume")
-            self.status_label.config(text="Download paused")
+            self.pause_button.configure(text="Resume")
+            self.status_label.configure(text="Download paused")
         else:
-            self.pause_resume_button.config(text="Pause")
-            self.status_label.config(text="Download resumed")
+            self.pause_button.configure(text="Pause")
+            self.status_label.configure(text="Download resumed")
 
     def cancel_download(self):
         self.download_cancelled = True
         for thread in self.download_threads:
             thread.join()  # Wait for all threads to finish
-        self.status_label.config(text="Cancelling download...")
+        self.status_label.configure(text="Cancelling download...")
         self.clean_up_partial_files()
         self.reset_ui()
 
@@ -430,16 +382,18 @@ class AdvancedParallelIDM:
                 os.remove(partial_file)
 
     def reset_ui(self):
-        self.overall_progress_bar['value'] = 0
-        self.overall_progress_label.config(text="Overall: 0%")
-        for progress_bar, progress_label in zip(self.segment_progress_bars, self.segment_progress_labels):
-            progress_bar['value'] = 0
-            progress_label.config(text="0%")
-        self.details_text.delete(1.0, tk.END)
-        self.status_label.config(text="Download cancelled")
-        self.download_button.config(state=tk.NORMAL)
-        self.pause_resume_button.config(state=tk.DISABLED)
-        self.cancel_button.config(state=tk.DISABLED)
+        self.overall_progress.set(0)
+        self.overall_label.configure(text="0%")
+
+        for progress_bar, label in zip(self.segment_progress_bars, self.segment_labels):
+            progress_bar.set(0)
+            label.configure(text="0%")
+
+        self.details_text.delete("0.0", "end")
+        self.status_label.configure(text="Download cancelled")
+        self.download_button.configure(state="normal")
+        self.pause_button.configure(state="disabled")
+        self.cancel_button.configure(state="disabled")
 
     def combine_segments(self):
         url = self.current_url
@@ -454,11 +408,13 @@ class AdvancedParallelIDM:
                     output_file.write(segment.read())
                 os.remove(segment_file)
 
-        self.status_label.config(
+        self.status_label.configure(
             text="Download completed and segments combined!")
+
+    def run(self):
+        self.window.mainloop()
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    idm = AdvancedParallelIDM(root)
-    root.mainloop()
+    app = ModernParallelIDM()
+    app.run()
