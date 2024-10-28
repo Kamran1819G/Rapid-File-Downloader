@@ -13,10 +13,10 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 
-class ModernParallelIDM:
+class RapidFileDownloader:
     def __init__(self):
         self.window = ctk.CTk()
-        self.window.title("Modern Internet Download Manager - by Kamran Khan")
+        self.window.title("Rapid File Downloader - by Kamran Khan")
         self.window.geometry("1000x800")
 
         self.create_widgets()
@@ -132,7 +132,7 @@ class ModernParallelIDM:
 
     def load_config(self):
         try:
-            with open('idm_config.json', 'r') as f:
+            with open('config.json', 'r') as f:
                 config = json.load(f)
                 self.path_entry.insert(0, config.get('default_path', ''))
         except FileNotFoundError:
@@ -142,7 +142,7 @@ class ModernParallelIDM:
         config = {
             'default_path': self.path_entry.get()
         }
-        with open('idm_config.json', 'w') as f:
+        with open('config.json', 'w') as f:
             json.dump(config, f)
 
     def browse_path(self):
@@ -416,5 +416,5 @@ class ModernParallelIDM:
 
 
 if __name__ == "__main__":
-    app = ModernParallelIDM()
+    app = RapidFileDownloader()
     app.run()
